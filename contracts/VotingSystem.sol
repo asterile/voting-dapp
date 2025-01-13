@@ -38,6 +38,7 @@ contract VotingSystem {
 
     address[] public candidateList; // List of candidate addresses
     string[] public areaList; // List of all areas
+    address[] public voterList; // List of voter addresses
 
     // Voting control
     bool public votingStarted;
@@ -83,6 +84,7 @@ contract VotingSystem {
         // Register voter
         voters[_voter] = Voter(true, false, address(0), _areaName, _nationalID);
         voterNationalIDExists[_nationalID] = true; // Mark National ID as used
+        voterList.push(_voter);
 
         emit VoterRegistered(_voter, _nationalID, _areaName);
     }
@@ -111,41 +113,40 @@ contract VotingSystem {
 
     // Function to cast a vote
     function vote(address _candidate, string memory _nationalID, string memory _area) external duringVoting {
-    // Validate voter existence and data
-    Voter storage sender = voters[msg.sender];
-    require(sender.isRegistered, "You are not registered to vote.");
-    require(!sender.hasVoted, "You have already voted.");
-    require(
-        keccak256(abi.encodePacked(sender.nationalID)) == keccak256(abi.encodePacked(_nationalID)),
-        "National ID does not match."
-    );
-    require(
-        keccak256(abi.encodePacked(sender.area)) == keccak256(abi.encodePacked(_area)),
-        "Area does not match the voter's registered area."
-    );
+        // Validate voter existence and data
+        Voter storage sender = voters[msg.sender];
+        require(sender.isRegistered, "You are not registered to vote.");
+        require(!sender.hasVoted, "You have already voted.");
+        require(
+            keccak256(abi.encodePacked(sender.nationalID)) == keccak256(abi.encodePacked(_nationalID)),
+            "National ID does not match."
+        );
+        require(
+            keccak256(abi.encodePacked(sender.area)) == keccak256(abi.encodePacked(_area)),
+            "Area does not match the voter's registered area."
+        );
 
-    // Validate candidate
-    require(candidates[_candidate].candidateAddress != address(0), "Invalid candidate.");
-    require(
-        keccak256(abi.encodePacked(candidates[_candidate].area)) == keccak256(abi.encodePacked(_area)),
-        "Candidate and voter must be in the same area."
-    );
+        // Validate candidate
+        require(candidates[_candidate].candidateAddress != address(0), "Invalid candidate.");
+        require(
+            keccak256(abi.encodePacked(candidates[_candidate].area)) == keccak256(abi.encodePacked(_area)),
+            "Candidate and voter must be in the same area."
+        );
 
-    // Ensure the votes in this area do not exceed maxVoters
-    Area storage area = areas[_area];
-    require(area.currentVotes < area.maxVoters, "Voting limit for this area has been reached.");
+        // Ensure the votes in this area do not exceed maxVoters
+        Area storage area = areas[_area];
+        require(area.currentVotes < area.maxVoters, "Voting limit for this area has been reached.");
 
-    // Update voter's status
-    sender.hasVoted = true;
-    sender.votedCandidate = _candidate;
+        // Update voter's status
+        sender.hasVoted = true;
+        sender.votedCandidate = _candidate;
 
-    // Increment vote counts
-    candidates[_candidate].voteCount += 1;
-    area.currentVotes += 1;
+        // Increment vote counts
+        candidates[_candidate].voteCount += 1;
+        area.currentVotes += 1;
 
-    emit VoteCasted(msg.sender, _candidate, _area);
-}
-
+        emit VoteCasted(msg.sender, _candidate, _area);
+    }
 
     // Function to end voting and tally results
     function endVoting() external onlyAdmin duringVoting {
@@ -179,42 +180,93 @@ contract VotingSystem {
         return areaList;
     }
 
-    // Function to get all candidates
-    function getCandidates() external view returns (address[] memory) {
-        return candidateList;
+    // Function to get all candidate names
+function getCandidates() external view returns (string[] memory) {
+    string[] memory candidateNames = new string[](candidateList.length);
+
+    for (uint256 i = 0; i < candidateList.length; i++) {
+        candidateNames[i] = candidates[candidateList[i]].name;
     }
 
-    function getCandidatesByArea(string memory _areaName) external view returns (address[] memory, string[] memory) {
-    require(areas[_areaName].maxVoters > 0, "Area does not exist.");
+    return candidateNames;
+}
 
-    // Count candidates in the area
+
+    // Function to get candidates by area
+    function getCandidatesByArea(string memory _areaName) external view returns (address[] memory, string[] memory) {
+        require(areas[_areaName].maxVoters > 0, "Area does not exist.");
+
+        // Count candidates in the area
+        uint256 count = 0;
+        for (uint256 i = 0; i < candidateList.length; i++) {
+            if (
+                keccak256(abi.encodePacked(candidates[candidateList[i]].area)) == 
+                keccak256(abi.encodePacked(_areaName))
+            ) {
+                count++;
+            }
+        }
+
+        // Collect candidate addresses and names
+        address[] memory areaCandidates = new address[](count);
+        string[] memory candidateNames = new string[](count);
+        uint256 index = 0;
+
+        for (uint256 i = 0; i < candidateList.length; i++) {
+            if (
+                keccak256(abi.encodePacked(candidates[candidateList[i]].area)) == 
+                keccak256(abi.encodePacked(_areaName))
+            ) {
+                areaCandidates[index] = candidateList[i];
+                candidateNames[index] = candidates[candidateList[i]].name;
+                index++;
+            }
+        }
+
+        return (areaCandidates, candidateNames);
+    }
+
+   function getTotalVotersByArea(string memory _areaName) public view returns (uint256) {
+    // Check if the area exists by ensuring maxVoters > 0
+    if (areas[_areaName].maxVoters == 0) {
+        return 0; // Return 0 if the area doesn't exist
+    }
+
+    // Count voters in the area
     uint256 count = 0;
-    for (uint256 i = 0; i < candidateList.length; i++) {
-        if (
-            keccak256(abi.encodePacked(candidates[candidateList[i]].area)) == 
-            keccak256(abi.encodePacked(_areaName))
-        ) {
+    for (uint256 i = 0; i < voterList.length; i++) {
+        // Ensure correct string comparison using keccak256
+        if (keccak256(abi.encodePacked(voters[voterList[i]].area)) == keccak256(abi.encodePacked(_areaName))) {
             count++;
         }
     }
 
-    // Collect candidate addresses and names
-    address[] memory areaCandidates = new address[](count);
-    string[] memory candidateNames = new string[](count);
-    uint256 index = 0;
-
-    for (uint256 i = 0; i < candidateList.length; i++) {
-        if (
-            keccak256(abi.encodePacked(candidates[candidateList[i]].area)) == 
-            keccak256(abi.encodePacked(_areaName))
-        ) {
-            areaCandidates[index] = candidateList[i];
-            candidateNames[index] = candidates[candidateList[i]].name;
-            index++;
-        }
-    }
-
-    return (areaCandidates, candidateNames);
+    return count; // Return the total number of voters in the specified area
 }
 
+
+
+    // Function to get the winner of candidates for each area
+    function getWinnerByArea(string memory _areaName) external view returns (address, string memory, uint256) {
+        require(areas[_areaName].maxVoters > 0, "Area does not exist.");
+
+        address winner = address(0);
+        uint256 highestVotes = 0;
+        string memory winnerName;
+
+        for (uint256 i = 0; i < candidateList.length; i++) {
+            if (
+                keccak256(abi.encodePacked(candidates[candidateList[i]].area)) ==
+                keccak256(abi.encodePacked(_areaName))
+            ) {
+                if (candidates[candidateList[i]].voteCount > highestVotes) {
+                    highestVotes = candidates[candidateList[i]].voteCount;
+                    winner = candidateList[i];
+                    winnerName = candidates[candidateList[i]].name;
+                }
+            }
+        }
+
+        return (winner, winnerName, highestVotes);
+    }
 }

@@ -3,12 +3,12 @@ require("@nomicfoundation/hardhat-toolbox");
 /** @type import('hardhat/config').HardhatUserConfig */
 module.exports = {
   solidity: "0.8.28",
-  paths:{
-    artifacts:'./src/artifacs',
+  paths: {
+    artifacts: './src/artifacts', // Corrected typo here
   },
-  networks:{
-    Hardhat:{
-      chainId:1337
-    }
-  }
+  networks: {
+    hardhat: {
+      chainId: 1337,
+    },
+  },
 };
