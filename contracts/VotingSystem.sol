@@ -226,23 +226,35 @@ function getCandidates() external view returns (string[] memory) {
         return (areaCandidates, candidateNames);
     }
 
-   function getTotalVotersByArea(string memory _areaName) public view returns (uint256) {
-    // Check if the area exists by ensuring maxVoters > 0
-    if (areas[_areaName].maxVoters == 0) {
-        return 0; // Return 0 if the area doesn't exist
-    }
+   function getTotalValidVotersByAllAreas() public view returns (string[] memory, uint256[] memory) {
+    // Initialize arrays to hold area names and voter counts
+    string[] memory areaNames = new string[](areaList.length);
+    uint256[] memory voterCounts = new uint256[](areaList.length);
 
-    // Count voters in the area
-    uint256 count = 0;
-    for (uint256 i = 0; i < voterList.length; i++) {
-        // Ensure correct string comparison using keccak256
-        if (keccak256(abi.encodePacked(voters[voterList[i]].area)) == keccak256(abi.encodePacked(_areaName))) {
-            count++;
+    // Loop through each area and calculate the valid voters for each area
+    for (uint256 i = 0; i < areaList.length; i++) {
+        uint256 count = 0;
+        string memory areaName = areaList[i];
+
+        // Count all registered voters for the current area (ignore if they have voted or not)
+        for (uint256 j = 0; j < voterList.length; j++) {
+            if (
+                voters[voterList[j]].isRegistered && // Only check if the voter is registered
+                keccak256(abi.encodePacked(voters[voterList[j]].area)) == keccak256(abi.encodePacked(areaName)) // Check if the area matches
+            ) {
+                count++;
+            }
         }
+
+        // Store the area name and count in the arrays
+        areaNames[i] = areaName;
+        voterCounts[i] = count;
     }
 
-    return count; // Return the total number of voters in the specified area
+    return (areaNames, voterCounts);
 }
+
+
 
 
 

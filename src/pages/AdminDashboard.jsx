@@ -6,7 +6,7 @@ import VotingSystem from '../artifacts/contracts/VotingSystem.sol/VotingSystem.j
 
 const AdminDashboard = () => {
     const [contract, setContract] = useState(null);
-    const [voterCountByArea, setVoterCountByArea] = useState(null);
+    const [voterCountByArea, setVoterCountByArea] = useState([]);
     const [areaName, setAreaName] = useState('');
 
     useEffect(() => {
@@ -14,8 +14,9 @@ const AdminDashboard = () => {
             if (typeof window.ethereum !== 'undefined') {
                 const provider = new Web3Provider(window.ethereum);
                 const signer = provider.getSigner(0);
-                const contractAddress = '0xf39Fd6e51aad88F6F4ce6aB8827279cffFb92266'; // Replace with your contract address
+                const contractAddress = '0xdc64a140aa3e981100a9beca4e685f962f0cf6c9'; // Replace with your contract address
                 const contract = new ethers.Contract(contractAddress, VotingSystem.abi, signer);
+                console.log(VotingSystem.abi);
                 setContract(contract);
             } else {
                 console.error('Ethereum object not found! Make sure MetaMask is installed.');
@@ -51,20 +52,41 @@ const AdminDashboard = () => {
         }
     };
 
-    async function getTotalVotersByArea(areaName) {
+    const getTotalValidVotersByAllAreas = async () => {
         try {
-            // Call contract function directly without .methods and .call
-            const voterCount = await contract.getTotalVotersByArea(areaName);
-            console.log("Voter count:", voterCount);
-            setVoterCountByArea(voterCount.toString()); // Update state with the result
+            // Log before calling the contract method
+            console.log('Calling getTotalValidVotersByAllAreas...');
+            
+            // Call the contract method
+            const [areas, validVotersCount] = await contract.getTotalValidVotersByAllAreas();
+            
+            // Log the raw output from the contract
+            console.log('Raw areas:', areas);
+            console.log('Raw validVotersCount:', validVotersCount);
+            
+            // Ensure both areas and validVotersCount have values
+            if (areas && validVotersCount) {
+                // Map the areas and counts to an array of objects
+                const areaData = areas.map((area, index) => ({
+                    area,
+                    count: validVotersCount[index].toString(), // Ensure count is a string
+                }));
+                
+                // Log the mapped data
+                console.log('Mapped area data:', areaData);
+                
+                // Update state with the result
+                setVoterCountByArea(areaData);
+            } else {
+                console.log('No data returned from contract call.');
+            }
         } catch (error) {
-            console.error("Error fetching voter count:", error);
+            // Log the error for debugging
+            console.error('Error fetching total valid voters by areas:', error);
         }
-    }
+    };
     
-    
-    
-    
+
     return (
         <div className="bg-[#552E43] min-h-screen flex flex-col">
             <div className="fixed top-0 left-0 w-full z-10 shadow-md">
@@ -120,18 +142,27 @@ const AdminDashboard = () => {
                         </form>
                     </div>
 
-                    <div className="w-[300px] h-[360px] p-4 bg-white shadow-md rounded">
-                        <h2 className="text-xl font-semibold mb-4">View Voter Count by Area</h2>
-                        <form onSubmit={(e) => {
-                            e.preventDefault();
-                            const areaName = e.target.areaName.value;
-                            getTotalVotersByArea(areaName);
-                        }}>
-                            <input type="text" name="areaName" placeholder="Area Name" className="border p-2 mb-2 w-full" required />
-                            <button type="submit" className="bg-[#F49B60] text-white p-2 w-full mt-20">Get Voter Count</button>
-                        </form>
-                        {voterCountByArea !== null && (
-                            <p className="mt-4">Total Voters in {areaName}: {voterCountByArea}</p>
+                    <div className="w-[600px] h-[360px] p-4 bg-white shadow-md rounded">
+                        <h2 className="text-xl font-semibold mb-4">View Valid Voter Count by Area</h2>
+                        <button onClick={getTotalValidVotersByAllAreas} className="bg-[#F49B60] text-white p-2 w-full mt-4">Get Voter Count</button>
+                        
+                        {voterCountByArea.length > 0 && (
+                            <table className="w-full mt-4 border-collapse">
+                                <thead>
+                                    <tr>
+                                        <th className="border p-2">Area Name</th>
+                                        <th className="border p-2">Voter Count</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {voterCountByArea.map((areaData, index) => (
+                                        <tr key={index}>
+                                            <td className="border p-2">{areaData.area}</td>
+                                            <td className="border p-2">{areaData.count}</td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
                         )}
                     </div>
                 </div>
