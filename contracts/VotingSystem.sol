@@ -111,42 +111,51 @@ contract VotingSystem {
         votingEnded = false;
     }
 
-    // Function to cast a vote
-    function vote(address _candidate, string memory _nationalID, string memory _area) external duringVoting {
-        // Validate voter existence and data
-        Voter storage sender = voters[msg.sender];
-        require(sender.isRegistered, "You are not registered to vote.");
-        require(!sender.hasVoted, "You have already voted.");
-        require(
-            keccak256(abi.encodePacked(sender.nationalID)) == keccak256(abi.encodePacked(_nationalID)),
-            "National ID does not match."
-        );
-        require(
-            keccak256(abi.encodePacked(sender.area)) == keccak256(abi.encodePacked(_area)),
-            "Area does not match the voter's registered area."
-        );
+       // Function to cast a vote
+function vote(string memory _candidateName, string memory _nationalID, string memory _area) external duringVoting {
+    // Validate voter existence and data
+    Voter storage sender = voters[msg.sender];
+    require(sender.isRegistered, "You are not registered to vote.");
+    require(!sender.hasVoted, "You have already voted.");
+    require(
+        keccak256(abi.encodePacked(sender.nationalID)) == keccak256(abi.encodePacked(_nationalID)),
+        "National ID does not match."
+    );
+    require(
+        keccak256(abi.encodePacked(sender.area)) == keccak256(abi.encodePacked(_area)),
+        "Area does not match the voter's registered area."
+    );
 
-        // Validate candidate
-        require(candidates[_candidate].candidateAddress != address(0), "Invalid candidate.");
-        require(
-            keccak256(abi.encodePacked(candidates[_candidate].area)) == keccak256(abi.encodePacked(_area)),
-            "Candidate and voter must be in the same area."
-        );
-
-        // Ensure the votes in this area do not exceed maxVoters
-        Area storage area = areas[_area];
-        require(area.currentVotes < area.maxVoters, "Voting limit for this area has been reached.");
-
-        // Update voter's status
-        sender.hasVoted = true;
-        sender.votedCandidate = _candidate;
-
-        // Increment vote counts
-        candidates[_candidate].voteCount += 1;
-        area.currentVotes += 1;
-
-        emit VoteCasted(msg.sender, _candidate, _area);
+    // Find the candidate by name
+    address candidateAddr = address(0);
+    for (uint256 i = 0; i < candidateList.length; i++) {
+        if (keccak256(abi.encodePacked(candidates[candidateList[i]].name)) == keccak256(abi.encodePacked(_candidateName))) {
+            candidateAddr = candidateList[i];
+            break;
+        }
     }
+    require(candidateAddr != address(0), "Invalid candidate name.");
+
+    // Validate candidate's area
+    require(
+        keccak256(abi.encodePacked(candidates[candidateAddr].area)) == keccak256(abi.encodePacked(_area)),
+        "Candidate and voter must be in the same area."
+    );
+
+    // Ensure the votes in this area do not exceed maxVoters
+    Area storage area = areas[_area];
+    require(area.currentVotes < area.maxVoters, "Voting limit for this area has been reached.");
+
+    // Update voter's status
+    sender.hasVoted = true;
+    sender.votedCandidate = candidateAddr;
+
+    // Increment vote counts
+    candidates[candidateAddr].voteCount += 1;
+    area.currentVotes += 1;
+
+    emit VoteCasted(msg.sender, candidateAddr, _area);
+}
 
     // Function to end voting and tally results
     function endVoting() external onlyAdmin duringVoting {
