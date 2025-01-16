@@ -17,7 +17,7 @@ export const Web3Provider = ({ children }) => {
           // Use the proper provider for v6
           const provider = new ethers.BrowserProvider(window.ethereum);
           const signer = await provider.getSigner(); // Await here for the signer
-          const contractAddress = '0x9a676e781a523b5d0c0e43731313a708cb607508'; // Replace with your contract address
+          const contractAddress = '0xc6e7df5e7b4f2a278906862b61205850344d4e7d'; // Replace with your contract address
           const contract = new ethers.Contract(contractAddress, VotingSystem.abi, signer);
 
           setWeb3(provider);

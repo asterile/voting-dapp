@@ -10,8 +10,8 @@ const AdminDashboard = () => {
     const [currentAddress, setCurrentAddress] = useState('');
     const [isAdmin, setIsAdmin] = useState(false);
     const [isVotingStarted, setIsVotingStarted] = useState(false);
+    const [isVotingEnded, setIsVotingEnded] = useState(false);
 
-    // Replace with your admin address
     const adminAddress = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266';
 
     useEffect(() => {
@@ -19,7 +19,7 @@ const AdminDashboard = () => {
             if (typeof window.ethereum !== 'undefined') {
                 const provider = new Web3Provider(window.ethereum);
                 const signer = provider.getSigner();
-                const contractAddress = '0x9a676e781a523b5d0c0e43731313a708cb607508'; // Replace with your contract address
+                const contractAddress = '0xc6e7df5e7b4f2a278906862b61205850344d4e7d'; // Replace with your contract address
                 const contract = new ethers.Contract(contractAddress, VotingSystem.abi, signer);
 
                 const address = await signer.getAddress();
@@ -32,6 +32,12 @@ const AdminDashboard = () => {
                 }
 
                 setContract(contract);
+
+                // Fetch voting status on component mount
+                const votingStatus = await contract.votingStarted();
+                const votingEndStatus = await contract.votingEnded();
+                setIsVotingStarted(votingStatus);
+                setIsVotingEnded(votingEndStatus);
             } else {
                 console.error('Ethereum object not found! Make sure MetaMask is installed.');
             }
@@ -105,15 +111,31 @@ const AdminDashboard = () => {
             await contract.endVoting();
             alert('Voting session ended successfully!');
             setIsVotingStarted(false);
+            setIsVotingEnded(true);
         } catch (error) {
+            console.error('Error:', error);
             const errorMessage = error.data?.message || error.message;
             alert(`Error ending voting session: ${errorMessage}`);
-            console.error('Error ending voting session:', error);
+        }
+    };
+
+    // New function to reset the voting system
+    const resetVotingSystem = async () => {
+        try {
+            await contract.resetVotingSystem();
+            alert('Voting system reset successfully!');
+            setIsVotingStarted(false);
+            setIsVotingEnded(false);
+            setVoterCountByArea([]); // Clear voter count data
+        } catch (error) {
+            const errorMessage = error.data?.message || error.message;
+            alert(`Error resetting voting system: ${errorMessage}`);
+            console.error('Error resetting voting system:', error);
         }
     };
 
     return (
-        <div className="bg-[#552E43] min-h-screen flex flex-col">
+        <div className="bg-[#FFE6D3] min-h-screen flex flex-col">
             <div className="fixed top-0 left-0 w-full z-10 shadow-md">
                 <Navbar />
             </div>
@@ -122,23 +144,33 @@ const AdminDashboard = () => {
                     <div className="flex flex-col justify-center items-start gap-8 p-8">
                         {/* Start Voting Session */}
                         <div>
-                            <h2 className="text-xl font-semibold mb-4 text-white">Manage Voting Session</h2>
-                            <div className="flex justify-between">
+                            <h2 className="text-xl font-semibold mb-4 text-black">Manage Voting Session</h2>
+                            <div className="flex justify-between gap-4">
                                 <button
                                     onClick={startVotingSession}
-                                    className={`p-2 w-48 ${isVotingStarted ? 'bg-gray-500' : 'bg-green-500'} text-white`}
+                                    className={`p-2 w-48 ${isVotingStarted ? 'bg-gray-500 cursor-not-allowed' : 'bg-green-500'} text-white`}
                                     disabled={isVotingStarted}
                                 >
                                     Start Voting Session
                                 </button>
                                 <button
                                     onClick={endVotingSession}
-                                    className="bg-red-500 text-white p-2 w-48"
+                                    className={`p-2 w-48 ${!isVotingStarted ? 'bg-gray-500 cursor-not-allowed' : 'bg-red-500'} text-white`}
                                     disabled={!isVotingStarted}
                                 >
                                     End Voting Session
                                 </button>
                             </div>
+                        </div>
+
+                        {/* Reset Voting System */}
+                        <div className="mt-4">
+                            <button
+                                onClick={resetVotingSystem}
+                                className="p-2 w-48 bg-blue-500 text-white"
+                            >
+                                Reset Voting System
+                            </button>
                         </div>
 
                         {/* Other Admin Functionalities */}
@@ -218,7 +250,7 @@ const AdminDashboard = () => {
                         </div>
                     </div>
                 ) : (
-                    <div className="text-white text-center text text-5xl">
+                    <div className="text-[#6B4E39] text-center text text-5xl">
                         <h1>You do not have access to this page.</h1>
                         <p>Only the admin can view this content.</p>
                     </div>

@@ -5,7 +5,7 @@ import { logo_vote, more, close } from '../assets'; // Assuming you have logo an
 const navLinks = [
   { id: "home", title: "Home", path: "/" },
   { id: "admin", title: "Admin Dashboard", path: "/admin" },
-  { id: "vote", title: "Voter Page", path: "/vote" },
+  
 ];
 
 const Navbar = () => {
@@ -14,7 +14,7 @@ const Navbar = () => {
   return (
     <nav className="w-full flex justify-between items-center bg-[#A8B4A5]">
       <Link to="/">
-        <img src={logo_vote} alt="Logo" className="w-[195px] h-[90px] ml-3" /> {/* Adjusted logo size */}
+        <img src={logo_vote} alt="Logo" className="w-[200px] h-[110px] ml-3" /> {/* Adjusted logo size */}
       </Link>
 
       {/* Desktop Menu */}

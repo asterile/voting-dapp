@@ -8,12 +8,12 @@ const HomePage = () => {
   const [area, setArea] = useState('');
   const [candidates, setCandidates] = useState([]);
   const [selectedCandidate, setSelectedCandidate] = useState('');
-
   const [message, setMessage] = useState('');
   const [votingStarted, setVotingStarted] = useState(false);
   const [votingEnded, setVotingEnded] = useState(false);
-  const [areaEntered, setAreaEntered] = useState(false); // Manage visibility of area input
-  const [nationalIDValid, setNationalIDValid] = useState(false); // Track National ID validation
+  const [areaEntered, setAreaEntered] = useState(false);
+  const [nationalIDValid, setNationalIDValid] = useState(false);
+  const [winner, setWinner] = useState(null); // To store the winner details
 
   // Effect to check the voting status when the component loads
   useEffect(() => {
@@ -24,6 +24,8 @@ const HomePage = () => {
           const votingEndStatus = await contract.votingEnded();
           setVotingStarted(votingStatus);
           setVotingEnded(votingEndStatus);
+          console.log('Voting status:', votingStatus);
+          console.log('Voting end status:', votingEndStatus);
         } catch (error) {
           console.error('Error fetching voting status:', error);
         }
@@ -41,15 +43,15 @@ const HomePage = () => {
     }
 
     try {
-      const signer = await web3.getSigner(); // Get the signer
-      const address = await signer.getAddress(); // Get the address of the current account
+      const signer = await web3.getSigner();
+      const address = await signer.getAddress();
 
       if (!address) {
         alert('No account found. Please connect your wallet.');
         return;
       }
 
-      const voter = await contract.voters(address); // Retrieve the current voter from the contract
+      const voter = await contract.voters(address);
       if (voter.nationalID === nationalID) {
         setNationalIDValid(true);
         setMessage('National ID validated successfully. Please enter your area.');
@@ -101,50 +103,86 @@ const HomePage = () => {
       return;
     }
 
-    // Check if entered name matches any candidate
-    const candidate = candidates.find((candidate) => candidate.candidateName.toLowerCase() === selectedCandidate.toLowerCase());
+    const candidate = candidates.find(
+      (candidate) => candidate.candidateName.toLowerCase() === selectedCandidate.toLowerCase()
+    );
     if (!candidate) {
       alert('No candidate found with that name. Please enter a valid candidate name.');
       return;
     }
 
-    // Validate if the selected candidate belongs to the same area as the user
-   /* const selectedCandidateArea = await contract.getCandidateArea(candidate.candidateID); // Assuming contract has this method
-    if (selectedCandidateArea !== area) {
-      alert('The selected candidate does not belong to your area. Please select a candidate from your area.');
-      return;
-    }*/
-
     try {
-      const signer = await web3.getSigner(); // Get the signer
-      const address = await signer.getAddress(); // Get the address of the current account
-      console.log(address); 
+      const signer = await web3.getSigner();
+      const address = await signer.getAddress();
+      console.log(address);
       console.log(nationalID);
       await contract.vote(candidate.candidateName, nationalID, area);
       setMessage('Vote successfully cast!');
     } catch (error) {
+      const errorMessage = error.data?.message || error.message;
+      alert(`Error: ${errorMessage}`);
       console.error('Error submitting vote:', error);
       setMessage('An error occurred while casting your vote.');
     }
   };
 
+  // Handle fetching the winner for the entered area
+  const getWinnerByArea = async () => {
+    if (!area) {
+      alert('Please enter your area.');
+      return;
+    }
+
+    try {
+      const winnerData = await contract.getWinnerByArea(area); // Assuming contract returns address, name, and votes
+      const [winnerAddress, winnerName, totalVotes] = winnerData;
+
+      setWinner({
+        address: winnerAddress,
+        name: winnerName,
+        votes: totalVotes,
+      });
+    } catch (error) {
+      console.error('Error fetching winner:', error);
+      setWinner('An error occurred while fetching the winner.');
+    }
+  };
+
   return (
-    <div>
+    <div className='bg-[#FFE6D3] min-h-screen flex flex-col items-center'>
       <div className={`fixed top-0 left-0 w-full z-10 shadow-md transition-all duration-300`}>
         <Navbar />
       </div>
-      <div className="p-4 mt-24">
-        <h1 className="text-2xl font-bold">Welcome to the Voting System</h1>
+      <div className="p-4 mt-44 w-[800px] mx-auto flex flex-col items-center">
+        <h1 className="text-5xl text-center text-[#6B4E39] font-bold">Welcome to the Voting System</h1>
 
         {votingEnded ? (
-          <p className="text-red-500 mt-4">The voting session has ended. Thank you for participating.</p>
+          <>
+            <p className="text-black mt-4 text-center text-3xl">The voting session has ended. Thank you for participating.</p>
+            <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+              <h2 className="text-xl font-semibold">Enter Your Area to Get the Winner</h2>
+              <input
+                type="text"
+                placeholder="Enter your area"
+                value={area}
+                onChange={(e) => setArea(e.target.value)}
+                className="border p-2 rounded mt-2 w-full"
+              />
+              <button
+                onClick={getWinnerByArea}
+                className="bg-[#F49B60] text-white p-2 rounded mt-4 w-full"
+              >
+                Get Winner
+              </button>
+            </div>
+          </>
         ) : !votingStarted ? (
-          <p className="text-red-500 mt-4">The voting session has not started. Please visit again when the voting starts.</p>
+          <p className="text-black mt-4 text-center text-3xl">The voting session has not started. Please visit again when the voting starts.</p>
         ) : (
           <>
             {!nationalIDValid ? (
-              <div>
-                <h2 className="text-xl font-semibold mt-4">Enter Your National ID</h2>
+              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                <h2 className="text-xl font-semibold">Enter Your National ID</h2>
                 <input
                   type="text"
                   placeholder="Enter your National ID"
@@ -154,14 +192,14 @@ const HomePage = () => {
                 />
                 <button
                   onClick={validateNationalID}
-                  className="bg-blue-500 text-white p-2 rounded mt-4"
+                  className="bg-[#F49B60] text-white p-2 rounded mt-4 w-full"
                 >
                   Validate National ID
                 </button>
               </div>
             ) : !areaEntered ? (
-              <div>
-                <h2 className="text-xl font-semibold mt-4">Enter Your Voting Area</h2>
+              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                <h2 className="text-xl font-semibold">Enter Your Voting Area</h2>
                 <input
                   type="text"
                   placeholder="Enter your area"
@@ -171,14 +209,14 @@ const HomePage = () => {
                 />
                 <button
                   onClick={handleAreaSubmit}
-                  className="bg-blue-500 text-white p-2 rounded mt-4"
+                  className="bg-[#F49B60] text-white p-2 rounded mt-4 w-full"
                 >
                   Submit Area
                 </button>
               </div>
             ) : (
-              <div>
-                <h2 className="text-xl font-semibold mt-4">Candidate List for {area}</h2>
+              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                <h2 className="text-xl font-semibold">Candidate List for {area}</h2>
                 {candidates.length > 0 ? (
                   <ul className="list-disc pl-6 mt-2">
                     {candidates.map((candidate) => (
@@ -200,8 +238,7 @@ const HomePage = () => {
                     placeholder="Enter candidate name"
                     className="border p-2 rounded mt-2 w-full"
                   />
-                  <br />
-                  <button onClick={handleVote} className="bg-yellow-500 text-white p-2 rounded mt-4">
+                  <button onClick={handleVote} className="bg-[#F49B60] text-white p-2 rounded mt-4 w-full">
                     Submit Vote
                   </button>
                 </div>
@@ -210,6 +247,16 @@ const HomePage = () => {
 
             {message && <p className="text-green-500 mt-4">{message}</p>}
           </>
+        )}
+
+        {/* Show the winner details in a new div */}
+        {winner && (
+          <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+            <h2 className="text-xl font-semibold">Elected Representative for {area}</h2>
+            <p className="mt-2"><strong>Name:</strong> {winner.name}</p>
+            <p className="mt-2"><strong>Address:</strong> {winner.address}</p>
+            <p className="mt-2"><strong>Total Votes:</strong> {winner.votes}</p>
+          </div>
         )}
       </div>
     </div>
