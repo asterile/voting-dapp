@@ -19,7 +19,7 @@ const AdminDashboard = () => {
             if (typeof window.ethereum !== 'undefined') {
                 const provider = new Web3Provider(window.ethereum);
                 const signer = provider.getSigner();
-                const contractAddress = '0x5fbdb2315678afecb367f032d93f642f64180aa3'; // Replace with your contract address
+                const contractAddress = '0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6'; // Replace with your contract address
                 const contract = new ethers.Contract(contractAddress, VotingSystem.abi, signer);
 
                 const address = await signer.getAddress();
