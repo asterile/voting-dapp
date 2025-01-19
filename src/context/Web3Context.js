@@ -17,7 +17,7 @@ export const Web3Provider = ({ children }) => {
           // Use the proper provider for v6
           const provider = new ethers.BrowserProvider(window.ethereum);
           const signer = await provider.getSigner(); // Await here for the signer
-          const contractAddress = '0x2279b7a0a67db372996a5fab50d91eaa73d2ebe6'; // Replace with your contract address
+          const contractAddress = '0xc69Ba33F7f8963b174f4A1B2F43De72AeD950daa'; // Replace with your contract address
           const contract = new ethers.Contract(contractAddress, VotingSystem.abi, signer);
 
           setWeb3(provider);
@@ -28,7 +28,7 @@ export const Web3Provider = ({ children }) => {
           setCurrentAddress(address);
 
           // Check if the user is an admin
-          const adminAddress = '0xf39fd6e51aad88f6f4ce6ab8827279cfffb92266'; // Replace with actual admin address
+          const adminAddress = '0x2803D1148522097352772680eb23196e62e372f7'; // Replace with actual admin address
           if (address.toLowerCase() === adminAddress.toLowerCase()) {
             setIsAdmin(true);
           } else {
