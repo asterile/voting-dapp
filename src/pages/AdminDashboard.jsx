@@ -19,7 +19,7 @@ const AdminDashboard = () => {
             if (typeof window.ethereum !== 'undefined') {
                 const provider = new Web3Provider(window.ethereum);
                 const signer = provider.getSigner();
-                const contractAddress = '0xc6e7df5e7b4f2a278906862b61205850344d4e7d'; // Replace with your contract address
+                const contractAddress = '0x5fbdb2315678afecb367f032d93f642f64180aa3'; // Replace with your contract address
                 const contract = new ethers.Contract(contractAddress, VotingSystem.abi, signer);
 
                 const address = await signer.getAddress();
@@ -135,7 +135,7 @@ const AdminDashboard = () => {
     };
 
     return (
-        <div className="bg-[#FFE6D3] min-h-screen flex flex-col">
+        <div className="bg-[#D9F4FF] min-h-screen flex flex-col">
             <div className="fixed top-0 left-0 w-full z-10 shadow-md">
                 <Navbar />
             </div>
@@ -144,7 +144,7 @@ const AdminDashboard = () => {
                     <div className="flex flex-col justify-center items-start gap-8 p-8">
                         {/* Start Voting Session */}
                         <div>
-                            <h2 className="text-xl font-semibold mb-4 text-black">Manage Voting Session</h2>
+                            <h2 className="text-xl font-semibold mb-4 text-[#03062E]">Manage Voting Session</h2>
                             <div className="flex justify-between gap-4">
                                 <button
                                     onClick={startVotingSession}
@@ -188,7 +188,7 @@ const AdminDashboard = () => {
                                 <input type="text" name="address" placeholder="Address" className="border p-2 mb-2 w-full" required />
                                 <input type="text" name="nationalID" placeholder="National ID" className="border p-2 mb-2 w-full" required />
                                 <input type="text" name="area" placeholder="Area" className="border p-2 mb-2 w-full" required />
-                                <button type="submit" className="bg-[#F49B60] text-white p-2 w-full">Register Candidate</button>
+                                <button type="submit" className="bg-[#780F8A] text-white p-2 w-full">Register Candidate</button>
                             </form>
                         </div>
 
@@ -205,7 +205,7 @@ const AdminDashboard = () => {
                                 <input type="text" name="address" placeholder="Address" className="border p-2 mb-2 w-full" required />
                                 <input type="text" name="nationalID" placeholder="National ID" className="border p-2 mb-2 w-full" required />
                                 <input type="text" name="area" placeholder="Area" className="border p-2 mb-2 w-full" required />
-                                <button type="submit" className="bg-[#F49B60] text-white p-2 w-full mt-12">Register Voter</button>
+                                <button type="submit" className="bg-[#780F8A] text-white p-2 w-full mt-12">Register Voter</button>
                             </form>
                         </div>
 
@@ -220,14 +220,14 @@ const AdminDashboard = () => {
                             }}>
                                 <input type="text" name="areaName" placeholder="Area Name" className="border p-2 mb-2 w-full" required />
                                 <input type="number" name="maxVoters" placeholder="Max Voters" className="border p-2 mb-2 w-full" required />
-                                <button type="submit" className="bg-[#F49B60] text-white p-2 w-full mt-20">Add Area</button>
+                                <button type="submit" className="bg-[#780F8A] text-white p-2 w-full mt-20">Add Area</button>
                             </form>
                         </div>
 
                         {/* View Valid Voter Count by Area */}
                         <div className="w-[800px] h-[360px] p-4 bg-white shadow-md rounded">
                             <h2 className="text-xl font-semibold mb-4">View Valid Voter Count by Area</h2>
-                            <button onClick={getTotalValidVotersByAllAreas} className="bg-[#F49B60] text-white p-2 w-full mt-4">Get Voter Count</button>
+                            <button onClick={getTotalValidVotersByAllAreas} className="bg-[#780F8A] text-white p-2 w-full mt-4">Get Voter Count</button>
 
                             {voterCountByArea.length > 0 && (
                                 <table className="w-full mt-4 border-collapse">

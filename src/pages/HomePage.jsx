@@ -1,7 +1,8 @@
 import React, { useContext, useState, useEffect } from 'react';
 import { Web3Context } from '../context/Web3Context';
 import Navbar from '../components/Navbar';
-
+import { homepage_pic } from '../assets';
+import Swal from 'sweetalert2';
 const HomePage = () => {
   const { web3, contract } = useContext(Web3Context);
   const [nationalID, setNationalID] = useState('');
@@ -70,6 +71,7 @@ const HomePage = () => {
       alert('Please enter your area.');
       return;
     }
+    setMessage('');
 
     setAreaEntered(true); // Set the area entered flag to true and fetch candidates
   };
@@ -117,7 +119,22 @@ const HomePage = () => {
       console.log(address);
       console.log(nationalID);
       await contract.vote(candidate.candidateName, nationalID, area);
-      setMessage('Vote successfully cast!');
+      // Display SweetAlert on successful vote
+      Swal.fire({
+        title: 'Vote Cast Successfully!',
+        text: `You have voted for ${candidate.candidateName}.`,
+        icon: 'success',
+        confirmButtonText: 'OK',
+      }).then(() => {
+        // Reset the form to the National ID input section
+        setNationalID('');
+        setArea('');
+        setSelectedCandidate('');
+        setCandidates([]);
+        setNationalIDValid(false);
+        setAreaEntered(false);
+        setMessage('');
+      });
     } catch (error) {
       const errorMessage = error.data?.message || error.message;
       alert(`Error: ${errorMessage}`);
@@ -149,117 +166,135 @@ const HomePage = () => {
   };
 
   return (
-    <div className='bg-[#FFE6D3] min-h-screen flex flex-col items-center'>
-      <div className={`fixed top-0 left-0 w-full z-10 shadow-md transition-all duration-300`}>
+    <div className="min-h-screen flex flex-col items-center overflow-hidden">
+      <div className="fixed top-0 left-0 w-full z-10 shadow-md transition-all duration-300">
         <Navbar />
       </div>
-      <div className="p-4 mt-44 w-[800px] mx-auto flex flex-col items-center">
-        <h1 className="text-5xl text-center text-[#6B4E39] font-bold">Welcome to the Voting System</h1>
-
-        {votingEnded ? (
-          <>
-            <p className="text-black mt-4 text-center text-3xl">The voting session has ended. Thank you for participating.</p>
-            <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-              <h2 className="text-xl font-semibold">Enter Your Area to Get the Winner</h2>
-              <input
-                type="text"
-                placeholder="Enter your area"
-                value={area}
-                onChange={(e) => setArea(e.target.value)}
-                className="border p-2 rounded mt-2 w-full"
-              />
-              <button
-                onClick={getWinnerByArea}
-                className="bg-[#F49B60] text-white p-2 rounded mt-4 w-full"
-              >
-                Get Winner
-              </button>
-            </div>
-          </>
-        ) : !votingStarted ? (
-          <p className="text-black mt-4 text-center text-3xl">The voting session has not started. Please visit again when the voting starts.</p>
-        ) : (
-          <>
-            {!nationalIDValid ? (
-              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-                <h2 className="text-xl font-semibold">Enter Your National ID</h2>
-                <input
-                  type="text"
-                  placeholder="Enter your National ID"
-                  value={nationalID}
-                  onChange={(e) => setNationalID(e.target.value)}
-                  className="border p-2 rounded mt-2 w-full"
-                />
-                <button
-                  onClick={validateNationalID}
-                  className="bg-[#F49B60] text-white p-2 rounded mt-4 w-full"
-                >
-                  Validate National ID
-                </button>
-              </div>
-            ) : !areaEntered ? (
-              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-                <h2 className="text-xl font-semibold">Enter Your Voting Area</h2>
-                <input
-                  type="text"
-                  placeholder="Enter your area"
-                  value={area}
-                  onChange={(e) => setArea(e.target.value)}
-                  className="border p-2 rounded mt-2 w-full"
-                />
-                <button
-                  onClick={handleAreaSubmit}
-                  className="bg-[#F49B60] text-white p-2 rounded mt-4 w-full"
-                >
-                  Submit Area
-                </button>
-              </div>
-            ) : (
-              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-                <h2 className="text-xl font-semibold">Candidate List for {area}</h2>
-                {candidates.length > 0 ? (
-                  <ul className="list-disc pl-6 mt-2">
-                    {candidates.map((candidate) => (
-                      <li key={candidate.candidateID}>
-                        {candidate.candidateName}
-                      </li>
-                    ))}
-                  </ul>
-                ) : (
-                  <p>No candidates available in this area.</p>
-                )}
-
-                <div className="mt-4">
-                  <h2 className="text-xl font-semibold">Enter the Name of Your Candidate</h2>
+      <div className="mt-24 w-full flex flex-col items-center">
+        <div className="flex w-full">
+          <div className="pt-20 w-1/2 h-[695px] p-4 bg-[#D9F4FF]">
+            <h1 className="text-5xl text-left text-[#03062E] font-bold mb-8">Welcome to the Voting System</h1>
+            {votingEnded ? (
+              <>
+                <p className="text-black mt-4 text-center text-3xl">
+                  The voting session has ended. Thank you for participating.
+                </p>
+                <div className="bg-white p-10 rounded-lg shadow-md mt-6">
+                  <h2 className="text-xl font-semibold">Enter Your Area to Get the Winner</h2>
                   <input
                     type="text"
-                    value={selectedCandidate}
-                    onChange={(e) => setSelectedCandidate(e.target.value)}
-                    placeholder="Enter candidate name"
+                    placeholder="Enter your area"
+                    value={area}
+                    onChange={(e) => setArea(e.target.value)}
                     className="border p-2 rounded mt-2 w-full"
                   />
-                  <button onClick={handleVote} className="bg-[#F49B60] text-white p-2 rounded mt-4 w-full">
-                    Submit Vote
+                  <button
+                    onClick={getWinnerByArea}
+                    className="bg-[#780F8A] text-white p-2 rounded mt-4 w-full"
+                  >
+                    Get Winner
                   </button>
                 </div>
+              </>
+            ) : !votingStarted ? (
+              <p className="text-black mt-4 text-center text-3xl">
+                The voting session has not started. Please visit again when the voting starts.
+              </p>
+            ) : (
+              <>
+                {!nationalIDValid ? (
+                  <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <h2 className="text-xl font-semibold">Enter Your National ID</h2>
+                    <input
+                      type="text"
+                      placeholder="Enter your National ID"
+                      value={nationalID}
+                      onChange={(e) => setNationalID(e.target.value)}
+                      className="border p-2 rounded mt-2 w-full"
+                    />
+                    <button
+                      onClick={validateNationalID}
+                      className="bg-[#780F8A] text-white p-2 rounded mt-4 w-full"
+                    >
+                      Validate National ID
+                    </button>
+                  </div>
+                ) : !areaEntered ? (
+                  <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                    <h2 className="text-xl font-semibold">Enter Your Voting Area</h2>
+                    <input
+                      type="text"
+                      placeholder="Enter your area"
+                      value={area}
+                      onChange={(e) => setArea(e.target.value)}
+                      className="border p-2 rounded mt-2 w-full"
+                    />
+                    <button
+                      onClick={handleAreaSubmit}
+                      className="bg-[#780F8A] text-white p-2 rounded mt-4 w-full"
+                    >
+                      Submit Area
+                    </button>
+                  </div>
+                ) : (
+                  <>
+                    <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                      <h2 className="text-xl font-semibold">Candidate List for {area}</h2>
+                      {candidates.length > 0 ? (
+                        <ul className="list-disc pl-6 mt-2">
+                          {candidates.map((candidate) => (
+                            <li key={candidate.candidateID}>
+                              {candidate.candidateName}
+                            </li>
+                          ))}
+                        </ul>
+                      ) : (
+                        <p>No candidates available in this area.</p>
+                      )}
+                    </div>
+                    <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                      <h2 className="text-xl font-semibold">Enter the Name of Your Candidate</h2>
+                      <input
+                        type="text"
+                        value={selectedCandidate}
+                        onChange={(e) => setSelectedCandidate(e.target.value)}
+                        placeholder="Enter candidate name"
+                        className="border p-2 rounded mt-2 w-full"
+                      />
+                      <button
+                        onClick={handleVote}
+                        className="bg-[#780F8A] text-white p-2 rounded mt-4 w-full"
+                      >
+                        Submit Vote
+                      </button>
+                    </div>
+                  </>
+                )}
+                {message && <p className="text-green-500 mt-4">{message}</p>}
+              </>
+            )}
+            {winner && (
+              <div className="bg-white p-6 rounded-lg shadow-md mt-6">
+                <h2 className="text-xl font-semibold">Elected Representative for {area}</h2>
+                <p className="mt-2">
+                  <strong>Name:</strong> {winner.name}
+                </p>
+                <p className="mt-2">
+                  <strong>Address:</strong> {winner.address}
+                </p>
+                <p className="mt-2">
+                  <strong>Total Votes:</strong> {winner.votes}
+                </p>
               </div>
             )}
-
-            {message && <p className="text-green-500 mt-4">{message}</p>}
-          </>
-        )}
-
-        {/* Show the winner details in a new div */}
-        {winner && (
-          <div className="bg-white p-6 rounded-lg shadow-md mt-6">
-            <h2 className="text-xl font-semibold">Elected Representative for {area}</h2>
-            <p className="mt-2"><strong>Name:</strong> {winner.name}</p>
-            <p className="mt-2"><strong>Address:</strong> {winner.address}</p>
-            <p className="mt-2"><strong>Total Votes:</strong> {winner.votes}</p>
           </div>
-        )}
+          <div className="w-1/2 h-[680px] flex items-center justify-center bg-purple-900">
+            <img src={homepage_pic} alt="Voting Illustration" className="max-w-full rounded-lg shadow-lg" />
+          </div>
+        </div>
       </div>
     </div>
+
   );
 };
 

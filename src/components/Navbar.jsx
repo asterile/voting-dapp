@@ -12,7 +12,7 @@ const Navbar = () => {
   const [toggle, setToggle] = useState(false);
 
   return (
-    <nav className="w-full flex justify-between items-center bg-[#A8B4A5]">
+    <nav className="w-full flex justify-between items-center bg-[#1A1447]">
       <Link to="/">
         <img src={logo_vote} alt="Logo" className="w-[200px] h-[110px] ml-3" /> {/* Adjusted logo size */}
       </Link>
@@ -20,8 +20,8 @@ const Navbar = () => {
       {/* Desktop Menu */}
       <ul className="list-none sm:flex hidden justify-end items-center flex-1 mr-3">
         {navLinks.map((nav, index) => (
-          <li key={nav.id} className={`font-poppins font-normal cursor-pointer text-[16px] ${index === navLinks.length - 1 ? 'mr-0' : 'mr-10'} text-black`}>
-            <Link to={nav.path} className="hover:text-orange-500">
+          <li key={nav.id} className={`font-poppins font-normal cursor-pointer text-[16px] text-white ${index === navLinks.length - 1 ? 'mr-0' : 'mr-10'} text-black`}>
+            <Link to={nav.path} className="hover:text-[#B528CE]">
               {nav.title}
             </Link>
           </li>
